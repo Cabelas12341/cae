@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ultra Car Club 🚗</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  background: #0a0a0a;
+  color: white;
+}
+
+center { margin-top: 20px; }
+
+input, button {
+  padding: 10px;
+  margin: 5px;
+  border-radius: 8px;
+  border: none;
+}
+
+button {
+  background: red;
+  color: white;
+  cursor: pointer;
+}
+
+#app { display: none; }
+
+.post {
+  background: #111;
+  margin: 10px auto;
+  max-width: 500px;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+img {
+  width: 100%;
+  border-radius: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<center>
+<h2>🚗 Ultra Car Club</h2>
+
+<!-- AUTH -->
+<div id="auth">
+  <input id="email" placeholder="Email"><br>
+  <input id="pass" type="password" placeholder="Password"><br>
+  <button onclick="signup()">Sign Up</button>
+  <button onclick="login()">Login</button>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <h3>Post a Car 🚘</h3>
+  <input id="text" placeholder="Caption"><br>
+  <input id="img" placeholder="Image URL"><br>
+  <button onclick="post()">Post</button>
+
+  <div id="feed"></div>
+</div>
+
+</center>
+
+<!-- FIREBASE (REQUIRED FOR FULL FUNCTION) -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } 
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs } 
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+/* 🔥 PUT YOUR FIREBASE CONFIG HERE */
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "XXXX",
+  appId: "XXXX"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+/* SIGN UP */
+window.signup = function() {
+  createUserWithEmailAndPassword(auth, email.value, pass.value)
+  .then(() => alert("Account created 🚗"))
+  .catch(err => alert(err.message));
+}
+
+/* LOGIN */
+window.login = function() {
+  signInWithEmailAndPassword(auth, email.value, pass.value)
+  .then(() => {
+    document.getElementById("auth").style.display = "none";
+    document.getElementById("app").style.display = "block";
+    loadPosts();
+  })
+  .catch(err => alert(err.message));
+}
+
+/* POST */
+window.post = async function() {
+  if(!text.value) return;
+
+  await addDoc(collection(db,"posts"), {
+    text: text.value,
+    img: img.value
+  });
+
+  text.value = "";
+  img.value = "";
+
+  loadPosts();
+}
+
+/* LOAD POSTS */
+window.loadPosts = async function() {
+  let feed = document.getElementById("feed");
+  feed.innerHTML = "";
+
+  let snap = await getDocs(collection(db,"posts"));
+
+  snap.forEach(doc => {
+    let p = doc.data();
+
+    feed.innerHTML += `
+      <div class="post">
+        <p>${p.text}</p>
+        ${p.img ? `<img src="${p.img}">` : ""}
+      </div>
+    `;
+  });
+}
+</script>
+
+</body>
+</html>
